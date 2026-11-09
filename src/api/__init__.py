@@ -1,0 +1,1 @@
+"""FastAPI backend application layer for QueryTrellis Studio."""

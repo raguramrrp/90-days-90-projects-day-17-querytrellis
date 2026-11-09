@@ -32,14 +32,23 @@ env/
 *.env
 !.env.example
 
-# Local SQLite metadata, optional local PG cluster & runtime files
+# Frontend Node / Next.js artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+
+# Local SQLite metadata, DuckDB sandboxes, optional local PG cluster & runtime files
 data/pg_cluster/
 data/postgres_data/
+data/sandboxes/
 data/*.db
 data/*.db-wal
 data/*.db-shm
 data/*.sqlite
 data/*.sqlite3
+*.duckdb
+*.duckdb.wal
 *.log
 *.tmp
 

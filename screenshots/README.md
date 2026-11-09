@@ -1,6 +1,24 @@
 # QueryTrellis UI Screenshots
 
-All screenshots below were captured locally from the live running Streamlit application (`app/main.py`) connected to PostgreSQL 18.6 (`127.0.0.1:55432`) with the 281,525-row `querytrellis_sample` database loaded (`1440x1040` viewport).
+## QueryTrellis Studio (Next.js 15 Light-First Editorial Workstation)
+
+Captured locally from the live running Next.js + FastAPI stack (`frontend/` + `src/api/main.py`) on a `1440x900` viewport connected to the offline **Enterprise HR & Sales Demo** (`duckdb` sandbox, 7 tables, `PostgreSQL` target dialect):
+
+| File | Workspace / Route | Highlights Shown |
+|---|---|---|
+| [`studio_query_studio.png`](studio_query_studio.png) | Query Studio (`/`) | Horizontal top masthead navigation, expandable inline schema catalog pills, natural language workbench, `#171B1A` Monaco SQL preview, AST verification status, and prompt gallery |
+| [`studio_sql_ide.png`](studio_sql_ide.png) | SQL IDE (`/sql-editor`) | Collapsible schema explorer tree, `#171B1A` Monaco SQL editor, SQLGlot AST validation/formatting, dialect converter bar, and multi-tab execution & clause results |
+| [`studio_debugging.png`](studio_debugging.png) | Debugger (`/debugging`) | Sample fault scenario presets, SQL editor under diagnosis, runtime trace input, and AST fix verification workflow |
+| [`studio_optimizer.png`](studio_optimizer.png) | Optimizer (`/optimizer`) | Three-tier analysis header (Tier 1 Static AST, Tier 2 Planner estimate, Tier 3 Consent-locked measured timing), optimization presets, and query analyzer |
+| [`studio_academy.png`](studio_academy.png) | SQL Academy (`/academy`) | 21-lesson interactive curriculum syllabus, mental-model callout, step-by-step DuckDB `StageTraceViewer` (`FROM & JOIN` -> `SELECT` -> `Final Query Result`), and live exercise workspace |
+| [`studio_databases.png`](studio_databases.png) | Databases (`/database-manager`) | Inspect-before-accept `.sql`/`.dump`/`.csv`/`.xlsx`/`.json` uploader, bundled multi-format sample datasets, live DB connector tab, and active schema browser |
+| [`studio_engine_api.png`](studio_engine_api.png) | Engine API (`/ai-settings`) | Top-aligned Save Configuration action, offline **Deterministic Schema AST Engine** mode card, opt-in **External Cloud API Gateway**, and compiler fallback disclosure |
+
+---
+
+## Preserved Legacy Streamlit Performance Workbench (`app/main.py`)
+
+Captured locally from the live running Streamlit application connected to PostgreSQL 18.6 (`127.0.0.1:55432`) with the 281,525-row `querytrellis_sample` database loaded (`1440x1040` viewport):
 
 | File | Page / View | Highlights Shown |
 |---|---|---|

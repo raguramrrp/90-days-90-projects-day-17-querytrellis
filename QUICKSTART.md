@@ -1,23 +1,25 @@
-# Quickstart Guide — QueryTrellis (Windows)
+# Quickstart Guide — QueryTrellis Studio (Windows)
 
-Get **QueryTrellis** running locally on Windows in under 3 minutes.
+Get **QueryTrellis Studio** running locally on Windows in under 3 minutes.
 
-## Option A: One-Command Batch Setup
+## Option A: One-Command Launch (Recommended)
 
 ```powershell
-git clone <your-repo-url>
 cd 90-days-90-projects-day-17-querytrellis
 .\setup.bat
-```
-
-Edit `.env` to set your PostgreSQL password (`PGPASSWORD=...`) if your local PostgreSQL server requires password authentication, then seed the sample database and start the workbench:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\setup_sample_db.py
 .\run.bat
 ```
 
-Open `http://127.0.0.1:8501` in your browser.
+Open **`http://127.0.0.1:3000`** in your browser (`http://127.0.0.1:8000/docs` serves FastAPI API docs).
+
+> Note: You can also invoke `.\90-days-90-projects-day-17-querytrellis\run.bat` directly from the parent `90 days` folder — `setup.bat`, `run.bat`, and `test.bat` automatically switch into the project directory, start FastAPI (`:8000`) + Next.js (`:3000`) in one supervised console, and shut both down cleanly on `Ctrl+C`.
+
+*(Optional)* Only if you also want to seed a separate external PostgreSQL 281,525-row benchmark database for the legacy Streamlit inspector:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\setup_sample_db.py
+.\.venv\Scripts\python.exe -m streamlit run app/main.py --server.address 127.0.0.1 --server.port 8501
+```
 
 ## Option B: Manual Windows PowerShell Setup
 

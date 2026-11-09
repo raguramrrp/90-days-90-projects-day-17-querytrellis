@@ -1,8 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
+cd /d "%~dp0"
 
 echo ======================================================================
-echo  QueryTrellis - PostgreSQL Query Performance ^& Optimization Workbench
+echo  QueryTrellis Studio - Natural Language SQL ^& Visual Learning Workbench
 echo  Windows Setup and Environment Initialization
 echo ======================================================================
 
@@ -30,46 +31,65 @@ if not exist ".venv\Scripts\python.exe" (
     echo [OK] Virtual environment (.venv) already exists.
 )
 
-:: 3. Install dependencies
-echo [*] Installing dependencies from requirements.txt...
+:: 3. Install Python backend dependencies
+echo [*] Installing Python dependencies from requirements.txt...
 ".venv\Scripts\python.exe" -m pip install --upgrade pip --quiet
 ".venv\Scripts\python.exe" -m pip install -r requirements.txt
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Failed to install dependencies.
+    echo [ERROR] Failed to install Python dependencies.
     exit /b 1
 )
-echo [OK] Dependencies installed successfully.
+echo [OK] Python dependencies installed successfully.
 
-:: 4. Create data directory and .env if absent (never overwrite existing .env)
+:: 4. Install Next.js frontend dependencies
+where npm >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Node.js / npm was not found on PATH.
+    echo Please install Node.js 20+ from https://nodejs.org/ and add it to PATH.
+    exit /b 1
+)
+
+echo [*] Installing Next.js frontend packages...
+call npm --prefix frontend install
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Failed to install frontend packages.
+    exit /b 1
+)
+echo [OK] Frontend packages installed successfully.
+
+:: 5. Build frontend assets for fast startup
+echo [*] Building Next.js production bundle...
+call npm --prefix frontend run build
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Frontend production build failed.
+    exit /b 1
+)
+
+:: 6. Create data/sample directories and .env if absent (never overwrite existing .env)
 if not exist "data" mkdir data
+if not exist "data\sandboxes" mkdir data\sandboxes
 
 if not exist ".env" (
     echo [*] Creating .env from .env.example...
     copy ".env.example" ".env" >nul
-    echo [OK] .env created. Edit .env to set your PostgreSQL PGPASSWORD if required.
+    echo [OK] .env created. Edit .env only if connecting live external DBs/models.
 ) else (
     echo [OK] Existing .env preserved.
 )
 
-:: 5. Attempt sample database initialization if PostgreSQL credentials are configured
-echo [*] Checking PostgreSQL sample database setup...
-".venv\Scripts\python.exe" scripts/setup_sample_db.py
+:: 7. Materialize Demo DuckDB Sandbox & Bundled Multi-Format Samples
+echo [*] Generating Demo Enterprise DuckDB Sandbox ^& Sample Datasets...
+".venv\Scripts\python.exe" -c "from src.connectors.demo_sandbox import ensure_demo_duckdb, ensure_sample_export_files; ensure_demo_duckdb(); ensure_sample_export_files()"
 if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [INFO] Automatic PostgreSQL sample seeding skipped or requires configuration.
-    echo        Configure PGHOST/PGPORT/PGUSER/PGPASSWORD in .env, then run:
-    echo          .venv\Scripts\python.exe scripts\setup_sample_db.py
-    echo        Or initialize an isolated local cluster on port 55432:
-    echo          .venv\Scripts\python.exe scripts\local_pg_cluster.py start --port 55432
-    echo          .venv\Scripts\python.exe scripts\setup_sample_db.py --host 127.0.0.1 --port 55432
-) else (
-    echo [OK] PostgreSQL sample database verified and populated.
+    echo [ERROR] Failed to build Demo sandbox dataset.
+    exit /b 1
 )
+echo [OK] Demo sandbox and sample_data/ ready.
 
 echo ======================================================================
 echo  QueryTrellis Setup Complete
-echo    - Launch Workbench:  run.bat
-echo    - Run Test Suite:    test.bat
+echo    - Launch Full Workbench:  run.bat
+echo    - Run Test Suite:         test.bat
 echo ======================================================================
 
 endlocal

@@ -1,0 +1,34 @@
+[
+  {
+    "product_id": 1,
+    "sku": "SKU-101",
+    "name": "CloudWarehouse Pro",
+    "category": "Analytics",
+    "unit_price": 1200.0,
+    "discontinued": false
+  },
+  {
+    "product_id": 2,
+    "sku": "SKU-102",
+    "name": "StreamPulse Connector",
+    "category": "Integration",
+    "unit_price": 650.0,
+    "discontinued": false
+  },
+  {
+    "product_id": 3,
+    "sku": "SKU-103",
+    "name": "VaultGuard Compliance",
+    "category": "Security",
+    "unit_price": 980.0,
+    "discontinued": false
+  },
+  {
+    "product_id": 4,
+    "sku": "SKU-107",
+    "name": "LegacyBatch Exporter",
+    "category": "Integration",
+    "unit_price": 450.0,
+    "discontinued": true
+  }
+]

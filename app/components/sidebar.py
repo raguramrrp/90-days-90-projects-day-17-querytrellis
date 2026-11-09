@@ -1,42 +1,75 @@
-"""Fixed left sidebar navigation and workspace top context header."""
+"""Fixed, collapsible left navigation sidebar for QueryTrellis."""
 from __future__ import annotations
 
 import html
 
 import streamlit as st
 
-from app.state import NAV_PAGES
+from app.state import NAV_GROUPS, navigate_to
 from src.db.connection_manager import ConnectionManager
 
 
 def render_sidebar() -> str:
-    """Render fixed sidebar navigation and compact connection summary."""
+    """Render grouped workstation navigation, connection badge, and policy footer."""
     conn_mgr: ConnectionManager = st.session_state["qt_conn_mgr"]
     status = conn_mgr.status
+    current_page = st.session_state.get("qt_nav_page", "Overview")
 
     with st.sidebar:
-        st.markdown("### QueryTrellis")
-        st.caption("PostgreSQL Query Performance Workbench")
-        st.divider()
-
-        current = st.session_state.get("qt_nav_page", "Overview")
-        idx = NAV_PAGES.index(current) if current in NAV_PAGES else 0
-        selected = st.radio(
-            "Navigation",
-            options=NAV_PAGES,
-            index=idx,
-            label_visibility="collapsed",
+        st.markdown(
+            """
+            <div class="qt-brand-wrap">
+                <div class="qt-brand-title">QueryTrellis</div>
+                <div class="qt-brand-sub">PostgreSQL Performance Workbench</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        st.session_state["qt_nav_page"] = selected
 
-        st.divider()
-        st.caption("TARGET DATABASE")
+        for group_title, group_key, items in NAV_GROUPS:
+            st.markdown(
+                f"<div class='qt-nav-heading'>{html.escape(group_title)}</div>",
+                unsafe_allow_html=True,
+            )
+            with st.container(key=group_key):
+                for item in items:
+                    is_active = current_page == item.page
+                    if st.button(
+                        item.page,
+                        key=f"qt_nav_btn_{item.page.lower().replace(' ', '_')}",
+                        icon=f":material/{item.icon}:",
+                        type="primary" if is_active else "secondary",
+                        width="stretch",
+                        help=item.subtitle,
+                    ):
+                        if not is_active:
+                            navigate_to(item.page)
+                            st.rerun()
+
+        st.markdown("<div style='height: 0.4rem;'></div>", unsafe_allow_html=True)
+
+        # Compact bottom connection summary card
         if status.connected:
-            st.markdown(f"**Status:** Connected")
-            st.markdown(f"**DB:** `{status.current_database}`")
-            st.markdown(f"**Host:** `{status.config.host}:{status.config.port}`")
-            st.markdown(f"**User:** `{status.current_user}`")
-            # Quick DB switcher directly in sidebar when multiple DBs exist
+            db_disp = html.escape(status.current_database)
+            host_disp = html.escape(f"{status.config.host}:{status.config.port}")
+            user_disp = html.escape(status.current_user or status.config.username)
+            ver_short = html.escape(status.server_version.split(",")[0] if status.server_version else "PostgreSQL")
+            st.markdown(
+                f"""
+                <div class="qt-sb-footer-card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-weight:600;color:var(--qt-text-primary);font-size:0.75rem;">
+                            <span class="qt-dot qt-dot-ok"></span>Connected
+                        </span>
+                        <span style="font-size:0.68rem;color:var(--qt-text-muted);font-family:var(--qt-font-mono);">{ver_short}</span>
+                    </div>
+                    <div class="qt-sb-kv"><span>Database</span><span class="qt-sb-mono" title="{db_disp}">{db_disp}</span></div>
+                    <div class="qt-sb-kv"><span>Endpoint</span><span class="qt-sb-mono" title="{host_disp}">{host_disp}</span></div>
+                    <div class="qt-sb-kv"><span>Role</span><span class="qt-sb-mono" title="{user_disp}">{user_disp}</span></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             if len(status.available_databases) > 1:
                 curr_idx = (
                     status.available_databases.index(status.current_database)
@@ -44,69 +77,49 @@ def render_sidebar() -> str:
                     else 0
                 )
                 chosen_db = st.selectbox(
-                    "Switch Database",
+                    "Active Database",
                     options=status.available_databases,
                     index=curr_idx,
                     key="qt_sidebar_db_switch",
+                    label_visibility="collapsed",
                 )
                 if chosen_db != status.current_database:
                     new_status = conn_mgr.switch_database(chosen_db)
                     if new_status.connected:
                         conn_mgr.fetch_catalog(force_refresh=True)
+                        st.toast(f"Switched database to {chosen_db}")
                         st.rerun()
                     else:
                         st.error(new_status.error_message)
         else:
-            st.markdown("**Status:** Disconnected")
-            st.caption("Static SQL parsing & anti-pattern rules remain available. Connect PostgreSQL in Settings.")
+            st.markdown(
+                """
+                <div class="qt-sb-footer-card">
+                    <div style="font-weight:600;color:var(--qt-text-primary);font-size:0.75rem;">
+                        <span class="qt-dot qt-dot-warn"></span>Disconnected
+                    </div>
+                    <div style="font-size:0.71rem;color:var(--qt-text-muted);margin-top:3px;">
+                        Static AST parsing &amp; rules active. Connect PostgreSQL in Settings.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-        st.divider()
-        st.caption("SAFE EXECUTION GUARDRAILS")
-        st.text(
-            f"Mode: READ ONLY\n"
-            f"Timeout: {st.session_state['qt_timeout_ms']} ms\n"
-            f"Max Rows: {st.session_state['qt_max_rows']}"
+        timeout_ms = st.session_state.get("qt_timeout_ms", 5000)
+        max_rows = st.session_state.get("qt_max_rows", 500)
+        st.markdown(
+            f"""
+            <div class="qt-sb-footer-card" style="padding:0.45rem 0.65rem;">
+                <div style="font-size:0.67rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--qt-text-muted);">
+                    Execution Policy
+                </div>
+                <div style="font-family:var(--qt-font-mono);font-size:0.71rem;color:var(--qt-text-secondary);margin-top:2px;">
+                    READ-ONLY &middot; {timeout_ms} ms &middot; {max_rows} rows
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    return selected
-
-
-def render_page_header(title: str, subtitle: str) -> None:
-    """Render a compact workstation header with sanitized live connection status."""
-    conn_mgr: ConnectionManager = st.session_state["qt_conn_mgr"]
-    status = conn_mgr.status
-    esc = html.escape
-
-    if status.connected:
-        ver_short = status.server_version.split(",")[0] if status.server_version else "PostgreSQL"
-        conn_pill = (
-            f"<span class='qt-pill qt-pill-connected'>CONNECTED: "
-            f"{esc(status.current_database)} @ {esc(status.config.host)}:{status.config.port}</span>"
-            f"<span class='qt-pill'>{esc(ver_short)}</span>"
-        )
-    else:
-        conn_pill = (
-            "<span class='qt-pill qt-pill-offline'>DISCONNECTED &mdash; Static AST Mode</span>"
-        )
-
-    guard_pill = (
-        f"<span class='qt-pill'>READ-ONLY TX | "
-        f"{st.session_state['qt_timeout_ms']} ms | "
-        f"LIMIT {st.session_state['qt_max_rows']}</span>"
-    )
-
-    st.markdown(
-        f"""
-        <div class="qt-topbar">
-          <div>
-            <div class="qt-topbar-title">{esc(title)}</div>
-            <div class="qt-topbar-sub">{esc(subtitle)}</div>
-          </div>
-          <div class="qt-status-bar">
-            {conn_pill}
-            {guard_pill}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    return st.session_state.get("qt_nav_page", "Overview")

@@ -43,8 +43,8 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    inject_workstation_css()
     init_session_state()
+    inject_workstation_css()
     selected_page = render_sidebar()
     renderer = PAGE_ROUTER.get(selected_page, render_overview_page)
     renderer()

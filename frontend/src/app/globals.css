@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  /* Editorial Light-First Surfaces */
+  --bg-canvas: #f7f7f4;
+  --bg-rail: #f1f2ee;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f9f9f7;
+  --bg-hover: #efefea;
+
+  /* Dedicated Dark Charcoal Coding Surface */
+  --bg-code: #171b1a;
+  --bg-code-bar: #1f2422;
+  --border-code: #2c3330;
+
+  /* Neutral Hairlines */
+  --border-subtle: #e6e8e4;
+  --border-strong: #d0d4ce;
+  --border-focus: #26745b;
+
+  /* Ink Typography Scale */
+  --text-primary: #202321;
+  --text-secondary: #686e69;
+  --text-muted: #8b918c;
+
+  /* Forest Green & Sage Accent System */
+  --accent-primary: #26745b;
+  --accent-hover: #1d5a46;
+  --accent-soft: #dce9e1;
+  --accent-tint: #eff5f1;
+  --accent-ink: #ffffff;
+
+  /* Restrained Semantic Tokens */
+  --status-success-bg: #f1f8f4;
+  --status-success-border: #bad6c6;
+  --status-success-text: #1c5a44;
+
+  --status-warning-bg: #fcf8ee;
+  --status-warning-border: #e6d1a0;
+  --status-warning-text: #7c5610;
+
+  --status-error-bg: #fdf3f3;
+  --status-error-border: #e7bec1;
+  --status-error-text: #9a2931;
+
+  /* Refined Typography Stacks */
+  --font-sans: "Inter", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code,
+pre,
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.qt-surface {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(32, 35, 33, 0.03);
+}
+
+.qt-inset {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+/* Native form controls */
+select,
+option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid rgba(38, 116, 91, 0.35);
+  outline-offset: 1px;
+}
+
+/* Subtle Neutral Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5d8d3;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b5bab3;
+}
