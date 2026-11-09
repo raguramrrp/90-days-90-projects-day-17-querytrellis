@@ -214,4 +214,4 @@ npm --prefix frontend run build
 
 ## License
 
-Released under the [MIT License](LICENSE) — Copyright (c) 2026 Raguraman.
+Released under the [MIT License](LICENSE) — Copyright (c) 2026 Ragu Ram.
