@@ -1,0 +1,7 @@
+label,run_index,is_warmup,client_wall_ms,pg_planning_ms,pg_execution_ms,rows_returned,shared_hit_blocks,shared_read_blocks
+Baseline (Correlated Subquery),0,True,198.654,0.093,197.331,100,65611,0
+Baseline (Correlated Subquery),1,False,208.866,0.081,207.164,100,65611,0
+Baseline (Correlated Subquery),2,False,254.694,0.109,253.224,100,65611,0
+Baseline (Correlated Subquery),3,False,248.599,0.083,247.193,100,65611,0
+Baseline (Correlated Subquery),4,False,317.574,0.098,315.824,100,65611,0
+Baseline (Correlated Subquery),5,False,256.517,0.109,255.026,100,65611,0

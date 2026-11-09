@@ -1,0 +1,488 @@
+{
+  "report_meta": {
+    "tool": "QueryTrellis \u2014 PostgreSQL Query Performance & Optimization Workbench",
+    "title": "Correlated Subquery vs. CTE LEFT JOIN \u2014 Sample Report",
+    "generated_at": "2026-11-09 13:10:33 UTC"
+  },
+  "database_info": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "database": "querytrellis_sample",
+    "username": "postgres",
+    "sslmode": "prefer",
+    "connect_timeout": 5,
+    "password_configured": false,
+    "server_version": "PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit"
+  },
+  "query": {
+    "sql_text": "SELECT\n    c.customer_id,\n    c.email,\n    c.segment,\n    (\n        SELECT COUNT(*)\n        FROM orders o\n        WHERE o.customer_id = c.customer_id\n          AND o.status = 'delivered'\n    ) AS delivered_orders\nFROM customers c\nWHERE c.country = 'India'\nLIMIT 100;",
+    "formatted_sql": "SELECT\n  c.customer_id,\n  c.email,\n  c.segment,\n  (\n    SELECT\n      COUNT(*)\n    FROM orders AS o\n    WHERE\n      o.customer_id = c.customer_id AND o.status = 'delivered'\n  ) AS delivered_orders\nFROM customers AS c\nWHERE\n  c.country = 'India'\nLIMIT 100;"
+  },
+  "explain_plan_summary": {
+    "analyzed": true,
+    "planning_time_ms": 3.165,
+    "execution_time_ms": 255.601,
+    "total_cost": 148116.95,
+    "root_plan_rows": 100,
+    "root_actual_rows": 100,
+    "total_shared_hit_blocks": 65611,
+    "total_shared_read_blocks": 0,
+    "total_temp_written_blocks": 0,
+    "used_indexes": [],
+    "node_types": [
+      "Limit",
+      "Seq Scan",
+      "Aggregate",
+      "Seq Scan"
+    ],
+    "node_count": 4,
+    "nodes": [
+      {
+        "node_id": 0,
+        "depth": 0,
+        "node_type": "Limit",
+        "label": "Limit",
+        "relation_name": null,
+        "index_name": null,
+        "startup_cost": 0.0,
+        "total_cost": 148116.95,
+        "plan_rows": 100,
+        "actual_rows": 100,
+        "actual_startup_time_ms": 3.683,
+        "actual_total_time_ms": 255.423,
+        "actual_loops": 1,
+        "inclusive_time_ms": 255.423,
+        "self_time_ms": 0.099,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0,
+        "temp_written_blocks": 0,
+        "sort_method": null,
+        "sort_space_used_kb": null,
+        "sort_space_type": null,
+        "rows_removed_by_filter": null,
+        "estimation_factor": 1.0,
+        "filter_cond": null,
+        "index_cond": null
+      },
+      {
+        "node_id": 1,
+        "depth": 1,
+        "node_type": "Seq Scan",
+        "label": "Seq Scan on customers",
+        "relation_name": "customers",
+        "index_name": null,
+        "startup_cost": 0.0,
+        "total_cost": 2972707.1,
+        "plan_rows": 2007,
+        "actual_rows": 100,
+        "actual_startup_time_ms": 3.68,
+        "actual_total_time_ms": 255.324,
+        "actual_loops": 1,
+        "inclusive_time_ms": 255.324,
+        "self_time_ms": 0.824,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0,
+        "temp_written_blocks": 0,
+        "sort_method": null,
+        "sort_space_used_kb": null,
+        "sort_space_type": null,
+        "rows_removed_by_filter": 593,
+        "estimation_factor": 20.07,
+        "filter_cond": "((country)::text = 'India'::text)",
+        "index_cond": null
+      },
+      {
+        "node_id": 2,
+        "depth": 2,
+        "node_type": "Aggregate",
+        "label": "Aggregate",
+        "relation_name": null,
+        "index_name": null,
+        "startup_cost": 1481.01,
+        "total_cost": 1481.02,
+        "plan_rows": 1,
+        "actual_rows": 1,
+        "actual_startup_time_ms": 2.545,
+        "actual_total_time_ms": 2.545,
+        "actual_loops": 100,
+        "inclusive_time_ms": 254.5,
+        "self_time_ms": 1.8,
+        "shared_hit_blocks": 65600,
+        "shared_read_blocks": 0,
+        "temp_written_blocks": 0,
+        "sort_method": null,
+        "sort_space_used_kb": null,
+        "sort_space_type": null,
+        "rows_removed_by_filter": null,
+        "estimation_factor": 1.0,
+        "filter_cond": null,
+        "index_cond": null
+      },
+      {
+        "node_id": 3,
+        "depth": 3,
+        "node_type": "Seq Scan",
+        "label": "Seq Scan on orders",
+        "relation_name": "orders",
+        "index_name": null,
+        "startup_cost": 0.0,
+        "total_cost": 1481.0,
+        "plan_rows": 2,
+        "actual_rows": 1,
+        "actual_startup_time_ms": 1.206,
+        "actual_total_time_ms": 2.527,
+        "actual_loops": 100,
+        "inclusive_time_ms": 252.7,
+        "self_time_ms": 252.7,
+        "shared_hit_blocks": 65600,
+        "shared_read_blocks": 0,
+        "temp_written_blocks": 0,
+        "sort_method": null,
+        "sort_space_used_kb": null,
+        "sort_space_type": null,
+        "rows_removed_by_filter": 54998,
+        "estimation_factor": 2.0,
+        "filter_cond": "((customer_id = c.customer_id) AND ((status)::text = 'delivered'::text))",
+        "index_cond": null
+      }
+    ]
+  },
+  "plan_insights": [
+    {
+      "insight_id": "EP001",
+      "title": "Selective Sequential Scan on Large Table",
+      "severity": "Medium",
+      "node_label": "Seq Scan on customers",
+      "node_id": 1,
+      "observation": "Seq Scan on 'customers' evaluated Filter (((country)::text = 'India'::text)) and discarded 593 of 693 rows (85.6% filtered out).",
+      "interpretation": "PostgreSQL read the full heap table because no suitable index matched the filter or the predicate was non-sargable.",
+      "recommendation": "Review the Filter expression and check Index Recommendations for a targeted B-tree or partial index."
+    },
+    {
+      "insight_id": "EP002",
+      "title": "Row Cardinality Misestimation (20.07x difference)",
+      "severity": "Medium",
+      "node_label": "Seq Scan on customers",
+      "node_id": 1,
+      "observation": "Planner estimated 2,007 row(s), but execution produced 100 row(s).",
+      "interpretation": "Large row misestimates can mislead PostgreSQL into picking Nested Loop instead of Hash Join (or under-allocating hash/sort memory).",
+      "recommendation": "Run `ANALYZE customers` if statistics are stale, or consider `CREATE STATISTICS` for correlated multi-column filters."
+    },
+    {
+      "insight_id": "EP004",
+      "title": "High Execution Loop Count (100 loops)",
+      "severity": "High",
+      "node_label": "Aggregate",
+      "node_id": 2,
+      "observation": "Node executed 100 times (254.50 ms cumulative).",
+      "interpretation": "Repeated inner execution typically occurs beneath a Nested Loop join or correlated SubPlan. Even fast sub-millisecond scans add up over thousands of loops.",
+      "recommendation": "Ensure an index exists on the inner join/filter key, or rewrite correlated subqueries into CTE/Hash Joins."
+    },
+    {
+      "insight_id": "EP001",
+      "title": "Selective Sequential Scan on Large Table",
+      "severity": "High",
+      "node_label": "Seq Scan on orders",
+      "node_id": 3,
+      "observation": "Seq Scan on 'orders' evaluated Filter (((customer_id = c.customer_id) AND ((status)::text = 'delivered'::text))) and discarded 54,998 of 54,999 rows (100.0% filtered out).",
+      "interpretation": "PostgreSQL read the full heap table because no suitable index matched the filter or the predicate was non-sargable.",
+      "recommendation": "Review the Filter expression and check Index Recommendations for a targeted B-tree or partial index."
+    },
+    {
+      "insight_id": "EP004",
+      "title": "High Execution Loop Count (100 loops)",
+      "severity": "High",
+      "node_label": "Seq Scan on orders",
+      "node_id": 3,
+      "observation": "Node executed 100 times (252.70 ms cumulative).",
+      "interpretation": "Repeated inner execution typically occurs beneath a Nested Loop join or correlated SubPlan. Even fast sub-millisecond scans add up over thousands of loops.",
+      "recommendation": "Ensure an index exists on the inner join/filter key, or rewrite correlated subqueries into CTE/Hash Joins."
+    }
+  ],
+  "antipatterns": [
+    {
+      "rule_id": "AP006",
+      "issue_name": "Correlated Subquery",
+      "severity": "High",
+      "affected_fragment": "SELECT COUNT(*) FROM orders AS o WHERE o.customer_id = c.customer_id AND o.status = 'delivered'",
+      "explanation": "Subquery references outer table alias(es) (c) inside a row-level expression or filter.",
+      "performance_impact": "If PostgreSQL cannot decorrelate the subquery into a Hash/Merge Join, it executes as a SubPlan once per outer row (high loop count).",
+      "when_acceptable": "Acceptable when outer result sets are tiny (< 100 rows) with a selective inner index, or when PostgreSQL's planner transforms EXISTS into a Semi Join.",
+      "suggested_improvement": "Rewrite using a pre-aggregated CTE joined via LEFT JOIN, or a LATERAL / window function expression.",
+      "confidence": "High",
+      "evidence_basis": "AST Outer-Alias Correlation Check"
+    }
+  ],
+  "index_recommendations": [
+    {
+      "rec_id": "IDX001",
+      "table_name": "customers",
+      "columns": [
+        "country"
+      ],
+      "include_columns": [
+        "customer_id",
+        "email",
+        "segment"
+      ],
+      "partial_predicate": null,
+      "index_type": "Covering (INCLUDE)",
+      "suggested_sql": "CREATE INDEX idx_customers_country_cov ON customers(country) INCLUDE (customer_id, email, segment);",
+      "related_condition": "c.country = 'India'",
+      "why_it_helps": "Includes projected columns (customer_id, email, segment) as non-key leaf payloads, enabling an Index-Only Scan without visiting the main heap table (once visibility map pages are clean).",
+      "existing_index_status": "No existing index on 'customers' has 'country' as leading key.",
+      "write_and_storage_overhead": "Larger index leaf pages than a plain single-column index; updates to INCLUDE columns also update the index.",
+      "when_not_helpful": "If the table receives heavy UPDATE traffic on the INCLUDE columns, or if queries frequently change projected columns.",
+      "confidence": "Medium",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~12,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    },
+    {
+      "rec_id": "IDX002",
+      "table_name": "customers",
+      "columns": [
+        "country"
+      ],
+      "include_columns": [],
+      "partial_predicate": null,
+      "index_type": "Single-Column B-tree",
+      "suggested_sql": "CREATE INDEX idx_customers_country ON customers(country);",
+      "related_condition": "c.country = 'India'",
+      "why_it_helps": "Allows PostgreSQL to jump directly to matching 'customers.country' entries via Index Scan / Bitmap Index Scan instead of scanning the entire table sequentially.",
+      "existing_index_status": "No existing index on 'customers' leads with 'country'.",
+      "write_and_storage_overhead": "Increases INSERT/DELETE time slightly and updates on 'country'; adds B-tree disk footprint.",
+      "when_not_helpful": "Not beneficial if the query returns a large fraction (>20\u201330%) of table rows, if the table is small, or if predicates wrap the column in non-sargable functions.",
+      "confidence": "High",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~12,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    },
+    {
+      "rec_id": "IDX003",
+      "table_name": "orders",
+      "columns": [
+        "customer_id",
+        "status"
+      ],
+      "include_columns": [],
+      "partial_predicate": null,
+      "index_type": "Composite B-tree",
+      "suggested_sql": "CREATE INDEX idx_orders_customer_id_status ON orders(customer_id, status);",
+      "related_condition": "o.customer_id = c.customer_id; o.status = 'delivered'",
+      "why_it_helps": "Follows the Equality-Sort-Range (ESR) B-tree ordering rule: equality keys narrow directly to a contiguous slice while trailing range/sort columns avoid extra filtering or Sort steps.",
+      "existing_index_status": "No existing index on 'orders' starts with (customer_id, status).",
+      "write_and_storage_overhead": "Adds B-tree maintenance cost on INSERT and on UPDATEs modifying any indexed column; wider keys consume slightly more disk/buffer space than single-column indexes.",
+      "when_not_helpful": "Ineffective if the leading equality column has very low selectivity (matching >25% of rows) or if queries omit the leading column.",
+      "confidence": "High",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~55,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    },
+    {
+      "rec_id": "IDX004",
+      "table_name": "orders",
+      "columns": [
+        "customer_id"
+      ],
+      "include_columns": [
+        "status"
+      ],
+      "partial_predicate": null,
+      "index_type": "Covering (INCLUDE)",
+      "suggested_sql": "CREATE INDEX idx_orders_customer_id_cov ON orders(customer_id) INCLUDE (status);",
+      "related_condition": "o.customer_id = c.customer_id",
+      "why_it_helps": "Includes projected columns (status) as non-key leaf payloads, enabling an Index-Only Scan without visiting the main heap table (once visibility map pages are clean).",
+      "existing_index_status": "No existing index on 'orders' has 'customer_id' as leading key.",
+      "write_and_storage_overhead": "Larger index leaf pages than a plain single-column index; updates to INCLUDE columns also update the index.",
+      "when_not_helpful": "If the table receives heavy UPDATE traffic on the INCLUDE columns, or if queries frequently change projected columns.",
+      "confidence": "Medium",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~55,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    },
+    {
+      "rec_id": "IDX005",
+      "table_name": "orders",
+      "columns": [
+        "customer_id"
+      ],
+      "include_columns": [],
+      "partial_predicate": null,
+      "index_type": "Single-Column B-tree",
+      "suggested_sql": "CREATE INDEX idx_orders_customer_id ON orders(customer_id);",
+      "related_condition": "o.customer_id = c.customer_id",
+      "why_it_helps": "Allows PostgreSQL to jump directly to matching 'orders.customer_id' entries via Index Scan / Bitmap Index Scan instead of scanning the entire table sequentially.",
+      "existing_index_status": "No existing index on 'orders' leads with 'customer_id'.",
+      "write_and_storage_overhead": "Increases INSERT/DELETE time slightly and updates on 'customer_id'; adds B-tree disk footprint.",
+      "when_not_helpful": "Not beneficial if the query returns a large fraction (>20\u201330%) of table rows, if the table is small, or if predicates wrap the column in non-sargable functions.",
+      "confidence": "High",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~55,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    },
+    {
+      "rec_id": "IDX006",
+      "table_name": "orders",
+      "columns": [
+        "status"
+      ],
+      "include_columns": [
+        "customer_id"
+      ],
+      "partial_predicate": null,
+      "index_type": "Covering (INCLUDE)",
+      "suggested_sql": "CREATE INDEX idx_orders_status_cov ON orders(status) INCLUDE (customer_id);",
+      "related_condition": "o.status = 'delivered'",
+      "why_it_helps": "Includes projected columns (customer_id) as non-key leaf payloads, enabling an Index-Only Scan without visiting the main heap table (once visibility map pages are clean).",
+      "existing_index_status": "No existing index on 'orders' has 'status' as leading key.",
+      "write_and_storage_overhead": "Larger index leaf pages than a plain single-column index; updates to INCLUDE columns also update the index.",
+      "when_not_helpful": "If the table receives heavy UPDATE traffic on the INCLUDE columns, or if queries frequently change projected columns.",
+      "confidence": "Medium",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~55,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    },
+    {
+      "rec_id": "IDX007",
+      "table_name": "orders",
+      "columns": [
+        "status"
+      ],
+      "include_columns": [],
+      "partial_predicate": null,
+      "index_type": "Single-Column B-tree",
+      "suggested_sql": "CREATE INDEX idx_orders_status ON orders(status);",
+      "related_condition": "o.status = 'delivered'",
+      "why_it_helps": "Allows PostgreSQL to jump directly to matching 'orders.status' entries via Index Scan / Bitmap Index Scan instead of scanning the entire table sequentially.",
+      "existing_index_status": "No existing index on 'orders' leads with 'status'.",
+      "write_and_storage_overhead": "Increases INSERT/DELETE time slightly and updates on 'status'; adds B-tree disk footprint.",
+      "when_not_helpful": "Not beneficial if the query returns a large fraction (>20\u201330%) of table rows, if the table is small, or if predicates wrap the column in non-sargable functions.",
+      "confidence": "High",
+      "evidence_sources": [
+        "AST Predicate/Join Analysis",
+        "Catalog Stats (~55,000 est. rows)",
+        "EXPLAIN Seq Scan + Filter"
+      ]
+    }
+  ],
+  "benchmark": {
+    "label": "Baseline (Correlated Subquery)",
+    "sql_hash": "9162b2d910e8f7e5",
+    "repeat_count": 5,
+    "warmup_used": true,
+    "client_stats_ms": {
+      "min": 208.866,
+      "max": 317.574,
+      "mean": 257.25,
+      "median": 254.694,
+      "p95": 317.574,
+      "stdev": 38.929
+    },
+    "pg_execution_stats_ms": {
+      "min": 207.164,
+      "max": 315.824,
+      "mean": 255.686,
+      "median": 253.224
+    },
+    "iterations": [
+      {
+        "run_index": 1,
+        "client_wall_ms": 208.866,
+        "pg_planning_ms": 0.081,
+        "pg_execution_ms": 207.164,
+        "rows_returned": 100,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0
+      },
+      {
+        "run_index": 2,
+        "client_wall_ms": 254.694,
+        "pg_planning_ms": 0.109,
+        "pg_execution_ms": 253.224,
+        "rows_returned": 100,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0
+      },
+      {
+        "run_index": 3,
+        "client_wall_ms": 248.599,
+        "pg_planning_ms": 0.083,
+        "pg_execution_ms": 247.193,
+        "rows_returned": 100,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0
+      },
+      {
+        "run_index": 4,
+        "client_wall_ms": 317.574,
+        "pg_planning_ms": 0.098,
+        "pg_execution_ms": 315.824,
+        "rows_returned": 100,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0
+      },
+      {
+        "run_index": 5,
+        "client_wall_ms": 256.517,
+        "pg_planning_ms": 0.109,
+        "pg_execution_ms": 255.026,
+        "rows_returned": 100,
+        "shared_hit_blocks": 65611,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "comparison": {
+    "baseline_label": "Baseline (Correlated Subquery)",
+    "optimized_label": "Optimized (CTE LEFT JOIN)",
+    "baseline_sql": "SELECT\n    c.customer_id,\n    c.email,\n    c.segment,\n    (\n        SELECT COUNT(*)\n        FROM orders o\n        WHERE o.customer_id = c.customer_id\n          AND o.status = 'delivered'\n    ) AS delivered_orders\nFROM customers c\nWHERE c.country = 'India'\nLIMIT 100;",
+    "optimized_sql": "WITH delivered_counts AS (\n    SELECT\n        customer_id,\n        COUNT(*) AS delivered_orders\n    FROM orders\n    WHERE status = 'delivered'\n    GROUP BY customer_id\n)\nSELECT\n    c.customer_id,\n    c.email,\n    c.segment,\n    COALESCE(dc.delivered_orders, 0) AS delivered_orders\nFROM customers c\nLEFT JOIN delivered_counts dc ON dc.customer_id = c.customer_id\nWHERE c.country = 'India'\nLIMIT 100;",
+    "baseline_time_ms": 253.224,
+    "optimized_time_ms": 6.645,
+    "time_diff_ms": -246.579,
+    "pct_change": -97.38,
+    "speedup_factor": 38.11,
+    "baseline_cost": 148116.95,
+    "optimized_cost": 1799.27,
+    "cost_diff": -146317.68,
+    "cost_pct_change": -98.79,
+    "baseline_rows": 100,
+    "optimized_rows": 100,
+    "row_count_matches": true,
+    "nodes_added": [
+      "Hash",
+      "Hash Join"
+    ],
+    "nodes_removed": [],
+    "indexes_added": [],
+    "indexes_removed": [],
+    "resolved_antipatterns": [
+      "Correlated Subquery"
+    ],
+    "remaining_antipatterns": [],
+    "introduced_antipatterns": [],
+    "verdict": "Improved",
+    "verdict_summary": "Measured execution time improved by 97.4% (253.224 ms -> 6.645 ms, 38.11x faster)."
+  },
+  "optimization_notes": "Sample optimization report generated directly against querytrellis_sample.",
+  "methodology_caveats": [
+    "Cold vs. Warm Cache: Run 1 may read pages from disk/OS cache (Shared Read Blocks), while subsequent runs hit PostgreSQL Shared Buffers.",
+    "Database Load & Concurrency: Concurrent queries, autovacuum, or background checkpoints on the host can introduce run-to-run variance.",
+    "Client vs. Server Time: Client-observed round-trip duration includes Python driver and IPC/TCP overhead; PostgreSQL Execution Time isolates server plan execution.",
+    "Planner Behavior: Parameter changes, stale statistics, or memory settings (work_mem) can alter plan selection across workloads.",
+    "Interpretation: Local benchmark results do not represent guaranteed production throughput under concurrency."
+  ]
+}

@@ -1,0 +1,16 @@
+[project]
+name = "querytrellis"
+version = "0.1.0"
+description = "QueryTrellis — PostgreSQL Query Performance & Optimization Workbench"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Raguraman" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: tests requiring a live PostgreSQL instance with the sample database",
+]

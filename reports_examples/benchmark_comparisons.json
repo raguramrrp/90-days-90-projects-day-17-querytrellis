@@ -1,0 +1,129 @@
+[
+  {
+    "baseline_label": "Baseline",
+    "optimized_label": "Optimized",
+    "baseline_sql": "SELECT *\nFROM customers\nWHERE LOWER(email) = 'customer125@example.com';",
+    "optimized_sql": "SELECT\n    customer_id,\n    first_name,\n    last_name,\n    email,\n    country,\n    segment\nFROM customers\nWHERE email = 'customer125@example.com';",
+    "baseline_time_ms": 1.508,
+    "optimized_time_ms": 0.02,
+    "time_diff_ms": -1.488,
+    "pct_change": -98.67,
+    "speedup_factor": 75.4,
+    "baseline_cost": 340.0,
+    "optimized_cost": 8.3,
+    "cost_diff": -331.7,
+    "cost_pct_change": -97.56,
+    "baseline_rows": 1,
+    "optimized_rows": 1,
+    "row_count_matches": true,
+    "nodes_added": [
+      "Index Scan"
+    ],
+    "nodes_removed": [
+      "Seq Scan"
+    ],
+    "indexes_added": [
+      "customers_email_key"
+    ],
+    "indexes_removed": [],
+    "resolved_antipatterns": [
+      "Non-Sargable Predicate (Function/Expression on Filtered Column)",
+      "Wildcard Projection (SELECT *)"
+    ],
+    "remaining_antipatterns": [],
+    "introduced_antipatterns": [],
+    "verdict": "Improved",
+    "verdict_summary": "Measured execution time improved by 98.7% (1.508 ms -> 0.020 ms, 75.40x faster)."
+  },
+  {
+    "baseline_label": "Baseline",
+    "optimized_label": "Optimized",
+    "baseline_sql": "SELECT\n    c.customer_id,\n    c.email,\n    c.segment,\n    (\n        SELECT COUNT(*)\n        FROM orders o\n        WHERE o.customer_id = c.customer_id\n          AND o.status = 'delivered'\n    ) AS delivered_orders\nFROM customers c\nWHERE c.country = 'India'\nLIMIT 100;",
+    "optimized_sql": "WITH delivered_counts AS (\n    SELECT\n        customer_id,\n        COUNT(*) AS delivered_orders\n    FROM orders\n    WHERE status = 'delivered'\n    GROUP BY customer_id\n)\nSELECT\n    c.customer_id,\n    c.email,\n    c.segment,\n    COALESCE(dc.delivered_orders, 0) AS delivered_orders\nFROM customers c\nLEFT JOIN delivered_counts dc ON dc.customer_id = c.customer_id\nWHERE c.country = 'India'\nLIMIT 100;",
+    "baseline_time_ms": 201.321,
+    "optimized_time_ms": 6.621,
+    "time_diff_ms": -194.7,
+    "pct_change": -96.71,
+    "speedup_factor": 30.41,
+    "baseline_cost": 148116.95,
+    "optimized_cost": 1799.27,
+    "cost_diff": -146317.68,
+    "cost_pct_change": -98.79,
+    "baseline_rows": 100,
+    "optimized_rows": 100,
+    "row_count_matches": true,
+    "nodes_added": [
+      "Hash",
+      "Hash Join"
+    ],
+    "nodes_removed": [],
+    "indexes_added": [],
+    "indexes_removed": [],
+    "resolved_antipatterns": [
+      "Correlated Subquery"
+    ],
+    "remaining_antipatterns": [],
+    "introduced_antipatterns": [],
+    "verdict": "Improved",
+    "verdict_summary": "Measured execution time improved by 96.7% (201.321 ms -> 6.621 ms, 30.41x faster)."
+  },
+  {
+    "baseline_label": "Baseline",
+    "optimized_label": "Optimized",
+    "baseline_sql": "SELECT\n    o.order_id,\n    o.customer_id,\n    o.order_date,\n    o.total_amount\nFROM orders o\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE c.email LIKE '%example.com'\nORDER BY o.order_date DESC, o.order_id DESC\nOFFSET 15000\nLIMIT 50;",
+    "optimized_sql": "SELECT\n    o.order_id,\n    o.customer_id,\n    o.order_date,\n    o.total_amount\nFROM orders o\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE c.email LIKE 'customer1%'\n  AND (o.order_date, o.order_id) < (TIMESTAMPTZ '2025-09-01 00:00:00+00', 40000)\nORDER BY o.order_date DESC, o.order_id DESC\nLIMIT 50;",
+    "baseline_time_ms": 25.829,
+    "optimized_time_ms": 8.44,
+    "time_diff_ms": -17.389,
+    "pct_change": -67.32,
+    "speedup_factor": 3.06,
+    "baseline_cost": 5938.98,
+    "optimized_cost": 2331.84,
+    "cost_diff": -3607.14,
+    "cost_pct_change": -60.74,
+    "baseline_rows": 50,
+    "optimized_rows": 50,
+    "row_count_matches": true,
+    "nodes_added": [],
+    "nodes_removed": [],
+    "indexes_added": [],
+    "indexes_removed": [],
+    "resolved_antipatterns": [
+      "Large OFFSET Pagination (OFFSET 15,000)",
+      "Leading Wildcard Pattern Match (LIKE/ILIKE '%...')"
+    ],
+    "remaining_antipatterns": [],
+    "introduced_antipatterns": [],
+    "verdict": "Improved",
+    "verdict_summary": "Measured execution time improved by 67.3% (25.829 ms -> 8.440 ms, 3.06x faster)."
+  },
+  {
+    "baseline_label": "Baseline",
+    "optimized_label": "Optimized",
+    "baseline_sql": "SELECT\n    order_id,\n    customer_id,\n    order_date,\n    total_amount\nFROM orders\nWHERE EXTRACT(YEAR FROM order_date) = 2025\nORDER BY order_date DESC\nLIMIT 200;",
+    "optimized_sql": "SELECT\n    order_id,\n    customer_id,\n    order_date,\n    total_amount\nFROM orders\nWHERE order_date >= TIMESTAMPTZ '2025-01-01 00:00:00+00'\n  AND order_date < TIMESTAMPTZ '2026-01-01 00:00:00+00'\nORDER BY order_date DESC\nLIMIT 200;",
+    "baseline_time_ms": 11.874,
+    "optimized_time_ms": 5.894,
+    "time_diff_ms": -5.98,
+    "pct_change": -50.36,
+    "speedup_factor": 2.01,
+    "baseline_cost": 1492.64,
+    "optimized_cost": 2685.81,
+    "cost_diff": 1193.17,
+    "cost_pct_change": 79.94,
+    "baseline_rows": 200,
+    "optimized_rows": 200,
+    "row_count_matches": true,
+    "nodes_added": [],
+    "nodes_removed": [],
+    "indexes_added": [],
+    "indexes_removed": [],
+    "resolved_antipatterns": [
+      "Non-Sargable Predicate (Function/Expression on Filtered Column)"
+    ],
+    "remaining_antipatterns": [],
+    "introduced_antipatterns": [],
+    "verdict": "Improved",
+    "verdict_summary": "Measured execution time improved by 50.4% (11.874 ms -> 5.894 ms, 2.01x faster)."
+  }
+]

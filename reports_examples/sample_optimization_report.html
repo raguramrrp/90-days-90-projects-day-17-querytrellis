@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Correlated Subquery vs. CTE LEFT JOIN — Sample Report — QueryTrellis Report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0F172A; background: #F8FAFC; margin: 0; padding: 24px; line-height: 1.5; }
+    .container { max-width: 1100px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 28px 34px; }
+    header { border-bottom: 2px solid #0F766E; padding-bottom: 14px; margin-bottom: 22px; }
+    h1 { margin: 0 0 6px 0; font-size: 22px; color: #0F172A; }
+    h2 { font-size: 16px; color: #0F172A; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; margin-top: 24px; }
+    h4 { margin: 0 0 8px 0; font-size: 14px; color: #0F766E; }
+    .meta { color: #475569; font-size: 13px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+    .kpi { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; color: #475569; letter-spacing: 0.04em; }
+    .kpi-val { font-size: 18px; font-weight: 600; color: #0F172A; margin-top: 4px; }
+    pre { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; overflow-x: auto; font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+    code { font-family: Consolas, "Courier New", monospace; background: #F1F5F9; padding: 1px 4px; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th, td { border: 1px solid #E2E8F0; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #F1F5F9; color: #0F172A; font-weight: 600; }
+    .card { border: 1px solid #CBD5E1; background: #F8FAFC; padding: 14px; margin-bottom: 12px; }
+    .advisory { background: #F0FDFA; border-left: 4px solid #0F766E; padding: 10px 14px; font-size: 13px; margin: 12px 0; }
+    footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 12px; color: #64748B; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Correlated Subquery vs. CTE LEFT JOIN — Sample Report</h1>
+      <div class="meta">
+        Generated: 2026-11-09 13:10:33 UTC | Database: <strong>querytrellis_sample</strong> @ 127.0.0.1:55432 (User: postgres)<br />
+        Server: PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit
+      </div>
+    </header>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">PG Execution Time</div><div class="kpi-val">255.601 ms</div></div>
+      <div class="kpi"><div class="kpi-label">PG Planning Time</div><div class="kpi-val">3.165 ms</div></div>
+      <div class="kpi"><div class="kpi-label">Estimated Total Cost</div><div class="kpi-val">148116.95</div></div>
+      <div class="kpi"><div class="kpi-label">Actual Root Rows</div><div class="kpi-val">100</div></div>
+    </div>
+
+    <section>
+      <h2>Analyzed SQL Statement</h2>
+      <pre>SELECT
+  c.customer_id,
+  c.email,
+  c.segment,
+  (
+    SELECT
+      COUNT(*)
+    FROM orders AS o
+    WHERE
+      o.customer_id = c.customer_id AND o.status = &#x27;delivered&#x27;
+  ) AS delivered_orders
+FROM customers AS c
+WHERE
+  c.country = &#x27;India&#x27;
+LIMIT 100;</pre>
+    </section>
+
+    <section>
+      <h2>PostgreSQL Execution Plan Tree</h2>
+      <pre>Limit  (cost=0.00..148116.95 rows=100 | actual time=3.683..255.423 ms rows=100 loops=1)
+      Buffers: shared hit=65611 read=0
+  -&gt;  [Outer] Seq Scan on customers  (cost=0.00..2972707.10 rows=2007 | actual time=3.680..255.324 ms rows=100 loops=1)
+        Filter: ((country)::text = &#x27;India&#x27;::text) (Rows Removed by Filter: 593)
+        Buffers: shared hit=65611 read=0
+    -&gt;  [SubPlan] Aggregate  (cost=1481.01..1481.02 rows=1 | actual time=2.545..2.545 ms rows=1 loops=100)
+          Buffers: shared hit=65600 read=0
+      -&gt;  [Outer] Seq Scan on orders  (cost=0.00..1481.00 rows=2 | actual time=1.206..2.527 ms rows=1 loops=100)
+            Filter: ((customer_id = c.customer_id) AND ((status)::text = &#x27;delivered&#x27;::text)) (Rows Removed by Filter: 54,998)
+            Buffers: shared hit=65600 read=0
+Planning Time: 3.165 ms
+Execution Time: 255.601 ms</pre>
+    </section>
+
+    <section>
+      <h2>Execution Plan Diagnostic Insights</h2>
+      <table>
+        <thead><tr><th>Severity</th><th>Insight</th><th>Plan Node</th><th>Observation &amp; Interpretation</th><th>Recommendation</th></tr></thead>
+        <tbody><tr><td><strong>Medium</strong></td><td>Selective Sequential Scan on Large Table</td><td><code>Seq Scan on customers</code></td><td>Seq Scan on &#x27;customers&#x27; evaluated Filter (((country)::text = &#x27;India&#x27;::text)) and discarded 593 of 693 rows (85.6% filtered out).<br>PostgreSQL read the full heap table because no suitable index matched the filter or the predicate was non-sargable.</td><td>Review the Filter expression and check Index Recommendations for a targeted B-tree or partial index.</td></tr><tr><td><strong>Medium</strong></td><td>Row Cardinality Misestimation (20.07x difference)</td><td><code>Seq Scan on customers</code></td><td>Planner estimated 2,007 row(s), but execution produced 100 row(s).<br>Large row misestimates can mislead PostgreSQL into picking Nested Loop instead of Hash Join (or under-allocating hash/sort memory).</td><td>Run `ANALYZE customers` if statistics are stale, or consider `CREATE STATISTICS` for correlated multi-column filters.</td></tr><tr><td><strong>High</strong></td><td>High Execution Loop Count (100 loops)</td><td><code>Aggregate</code></td><td>Node executed 100 times (254.50 ms cumulative).<br>Repeated inner execution typically occurs beneath a Nested Loop join or correlated SubPlan. Even fast sub-millisecond scans add up over thousands of loops.</td><td>Ensure an index exists on the inner join/filter key, or rewrite correlated subqueries into CTE/Hash Joins.</td></tr><tr><td><strong>High</strong></td><td>Selective Sequential Scan on Large Table</td><td><code>Seq Scan on orders</code></td><td>Seq Scan on &#x27;orders&#x27; evaluated Filter (((customer_id = c.customer_id) AND ((status)::text = &#x27;delivered&#x27;::text))) and discarded 54,998 of 54,999 rows (100.0% filtered out).<br>PostgreSQL read the full heap table because no suitable index matched the filter or the predicate was non-sargable.</td><td>Review the Filter expression and check Index Recommendations for a targeted B-tree or partial index.</td></tr><tr><td><strong>High</strong></td><td>High Execution Loop Count (100 loops)</td><td><code>Seq Scan on orders</code></td><td>Node executed 100 times (252.70 ms cumulative).<br>Repeated inner execution typically occurs beneath a Nested Loop join or correlated SubPlan. Even fast sub-millisecond scans add up over thousands of loops.</td><td>Ensure an index exists on the inner join/filter key, or rewrite correlated subqueries into CTE/Hash Joins.</td></tr></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Detected SQL Anti-Patterns</h2>
+      <table>
+        <thead><tr><th>Severity</th><th>Issue</th><th>SQL Fragment</th><th>Explanation &amp; Context</th><th>Suggested Rewrite</th></tr></thead>
+        <tbody><tr><td><strong>High</strong></td><td>Correlated Subquery<br><small>High confidence (AST Outer-Alias Correlation Check)</small></td><td><code>SELECT COUNT(*) FROM orders AS o WHERE o.customer_id = c.customer_id AND o.status = &#x27;delivered&#x27;</code></td><td>Subquery references outer table alias(es) (c) inside a row-level expression or filter.<br><em>When acceptable:</em> Acceptable when outer result sets are tiny (&lt; 100 rows) with a selective inner index, or when PostgreSQL&#x27;s planner transforms EXISTS into a Semi Join.</td><td>Rewrite using a pre-aggregated CTE joined via LEFT JOIN, or a LATERAL / window function expression.</td></tr></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Advisory Index Recommendations</h2>
+      <div class="advisory">Notice: Index DDL statements below are strictly advisory recommendations. QueryTrellis never applies schema changes automatically.</div>
+      <div class='card'><h4>IDX001 &mdash; Covering (INCLUDE) on <code>customers</code> (Medium confidence)</h4><p><strong>Related Condition:</strong> <code>c.country = &#x27;India&#x27;</code></p><pre>CREATE INDEX idx_customers_country_cov ON customers(country) INCLUDE (customer_id, email, segment);</pre><p><strong>Why it helps:</strong> Includes projected columns (customer_id, email, segment) as non-key leaf payloads, enabling an Index-Only Scan without visiting the main heap table (once visibility map pages are clean).</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;customers&#x27; has &#x27;country&#x27; as leading key.</p><p><strong>Write &amp; Storage Overhead:</strong> Larger index leaf pages than a plain single-column index; updates to INCLUDE columns also update the index.</p><p><strong>When It May Not Help:</strong> If the table receives heavy UPDATE traffic on the INCLUDE columns, or if queries frequently change projected columns.</p></div><div class='card'><h4>IDX002 &mdash; Single-Column B-tree on <code>customers</code> (High confidence)</h4><p><strong>Related Condition:</strong> <code>c.country = &#x27;India&#x27;</code></p><pre>CREATE INDEX idx_customers_country ON customers(country);</pre><p><strong>Why it helps:</strong> Allows PostgreSQL to jump directly to matching &#x27;customers.country&#x27; entries via Index Scan / Bitmap Index Scan instead of scanning the entire table sequentially.</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;customers&#x27; leads with &#x27;country&#x27;.</p><p><strong>Write &amp; Storage Overhead:</strong> Increases INSERT/DELETE time slightly and updates on &#x27;country&#x27;; adds B-tree disk footprint.</p><p><strong>When It May Not Help:</strong> Not beneficial if the query returns a large fraction (&gt;20–30%) of table rows, if the table is small, or if predicates wrap the column in non-sargable functions.</p></div><div class='card'><h4>IDX003 &mdash; Composite B-tree on <code>orders</code> (High confidence)</h4><p><strong>Related Condition:</strong> <code>o.customer_id = c.customer_id; o.status = &#x27;delivered&#x27;</code></p><pre>CREATE INDEX idx_orders_customer_id_status ON orders(customer_id, status);</pre><p><strong>Why it helps:</strong> Follows the Equality-Sort-Range (ESR) B-tree ordering rule: equality keys narrow directly to a contiguous slice while trailing range/sort columns avoid extra filtering or Sort steps.</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;orders&#x27; starts with (customer_id, status).</p><p><strong>Write &amp; Storage Overhead:</strong> Adds B-tree maintenance cost on INSERT and on UPDATEs modifying any indexed column; wider keys consume slightly more disk/buffer space than single-column indexes.</p><p><strong>When It May Not Help:</strong> Ineffective if the leading equality column has very low selectivity (matching &gt;25% of rows) or if queries omit the leading column.</p></div><div class='card'><h4>IDX004 &mdash; Covering (INCLUDE) on <code>orders</code> (Medium confidence)</h4><p><strong>Related Condition:</strong> <code>o.customer_id = c.customer_id</code></p><pre>CREATE INDEX idx_orders_customer_id_cov ON orders(customer_id) INCLUDE (status);</pre><p><strong>Why it helps:</strong> Includes projected columns (status) as non-key leaf payloads, enabling an Index-Only Scan without visiting the main heap table (once visibility map pages are clean).</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;orders&#x27; has &#x27;customer_id&#x27; as leading key.</p><p><strong>Write &amp; Storage Overhead:</strong> Larger index leaf pages than a plain single-column index; updates to INCLUDE columns also update the index.</p><p><strong>When It May Not Help:</strong> If the table receives heavy UPDATE traffic on the INCLUDE columns, or if queries frequently change projected columns.</p></div><div class='card'><h4>IDX005 &mdash; Single-Column B-tree on <code>orders</code> (High confidence)</h4><p><strong>Related Condition:</strong> <code>o.customer_id = c.customer_id</code></p><pre>CREATE INDEX idx_orders_customer_id ON orders(customer_id);</pre><p><strong>Why it helps:</strong> Allows PostgreSQL to jump directly to matching &#x27;orders.customer_id&#x27; entries via Index Scan / Bitmap Index Scan instead of scanning the entire table sequentially.</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;orders&#x27; leads with &#x27;customer_id&#x27;.</p><p><strong>Write &amp; Storage Overhead:</strong> Increases INSERT/DELETE time slightly and updates on &#x27;customer_id&#x27;; adds B-tree disk footprint.</p><p><strong>When It May Not Help:</strong> Not beneficial if the query returns a large fraction (&gt;20–30%) of table rows, if the table is small, or if predicates wrap the column in non-sargable functions.</p></div><div class='card'><h4>IDX006 &mdash; Covering (INCLUDE) on <code>orders</code> (Medium confidence)</h4><p><strong>Related Condition:</strong> <code>o.status = &#x27;delivered&#x27;</code></p><pre>CREATE INDEX idx_orders_status_cov ON orders(status) INCLUDE (customer_id);</pre><p><strong>Why it helps:</strong> Includes projected columns (customer_id) as non-key leaf payloads, enabling an Index-Only Scan without visiting the main heap table (once visibility map pages are clean).</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;orders&#x27; has &#x27;status&#x27; as leading key.</p><p><strong>Write &amp; Storage Overhead:</strong> Larger index leaf pages than a plain single-column index; updates to INCLUDE columns also update the index.</p><p><strong>When It May Not Help:</strong> If the table receives heavy UPDATE traffic on the INCLUDE columns, or if queries frequently change projected columns.</p></div><div class='card'><h4>IDX007 &mdash; Single-Column B-tree on <code>orders</code> (High confidence)</h4><p><strong>Related Condition:</strong> <code>o.status = &#x27;delivered&#x27;</code></p><pre>CREATE INDEX idx_orders_status ON orders(status);</pre><p><strong>Why it helps:</strong> Allows PostgreSQL to jump directly to matching &#x27;orders.status&#x27; entries via Index Scan / Bitmap Index Scan instead of scanning the entire table sequentially.</p><p><strong>Existing Index Check:</strong> No existing index on &#x27;orders&#x27; leads with &#x27;status&#x27;.</p><p><strong>Write &amp; Storage Overhead:</strong> Increases INSERT/DELETE time slightly and updates on &#x27;status&#x27;; adds B-tree disk footprint.</p><p><strong>When It May Not Help:</strong> Not beneficial if the query returns a large fraction (&gt;20–30%) of table rows, if the table is small, or if predicates wrap the column in non-sargable functions.</p></div>
+    </section>
+
+    
+        <section>
+          <h2>Benchmark Summary (Baseline (Correlated Subquery))</h2>
+          <p>Measured runs: 5 | Warmup run excluded: Yes</p>
+          <table>
+            <thead><tr><th>Metric</th><th>Client Wall Time (ms)</th><th>PostgreSQL Execution Time (ms)</th></tr></thead>
+            <tbody>
+              <tr><td>Minimum</td><td>208.866</td><td>207.164</td></tr>
+              <tr><td>Median</td><td>254.694</td><td>253.224</td></tr>
+              <tr><td>Mean (Average)</td><td>257.25</td><td>255.686</td></tr>
+              <tr><td>Maximum</td><td>317.574</td><td>315.824</td></tr>
+              <tr><td>P95</td><td>317.574</td><td>Unavailable</td></tr>
+            </tbody>
+          </table>
+        </section>
+        
+    
+        <section>
+          <h2>Before &amp; After Query Comparison</h2>
+          <p><strong>Verdict:</strong> Improved &mdash; Measured execution time improved by 97.4% (253.224 ms -&gt; 6.645 ms, 38.11x faster).</p>
+          <table>
+            <thead><tr><th>Metric</th><th>Baseline (Correlated Subquery)</th><th>Optimized (CTE LEFT JOIN)</th><th>Delta</th></tr></thead>
+            <tbody>
+              <tr><td>Execution Time (ms)</td><td>253.224</td><td>6.645</td><td>-246.579 ms (-97.38%)</td></tr>
+              <tr><td>Total Plan Cost</td><td>148116.95</td><td>1799.27</td><td>-146317.68 (-98.79%)</td></tr>
+              <tr><td>Rows Returned</td><td>100</td><td>100</td><td>Match</td></tr>
+              <tr><td>Indexes Added</td><td colspan="3">None</td></tr>
+              <tr><td>Resolved Anti-Patterns</td><td colspan="3">Correlated Subquery</td></tr>
+            </tbody>
+          </table>
+        </section>
+        
+    <section><h2>Optimization Notes</h2><p>Sample optimization report generated directly against querytrellis_sample.</p></section>
+
+    <section>
+      <h2>Benchmark &amp; Measurement Caveats</h2>
+      <ul><li>Cold vs. Warm Cache: Run 1 may read pages from disk/OS cache (Shared Read Blocks), while subsequent runs hit PostgreSQL Shared Buffers.</li><li>Database Load &amp; Concurrency: Concurrent queries, autovacuum, or background checkpoints on the host can introduce run-to-run variance.</li><li>Client vs. Server Time: Client-observed round-trip duration includes Python driver and IPC/TCP overhead; PostgreSQL Execution Time isolates server plan execution.</li><li>Planner Behavior: Parameter changes, stale statistics, or memory settings (work_mem) can alter plan selection across workloads.</li><li>Interpretation: Local benchmark results do not represent guaranteed production throughput under concurrency.</li></ul>
+    </section>
+
+    <footer>
+      QueryTrellis &mdash; PostgreSQL Query Performance &amp; Optimization Workbench. Credentials are never stored or exported in reports.
+    </footer>
+  </div>
+</body>
+</html>
